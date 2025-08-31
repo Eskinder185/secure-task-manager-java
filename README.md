@@ -1,96 +1,146 @@
-# SecureTask — Spring Boot Starter
+SecureTask – Spring Boot Starter
 
-This is a minimal Spring Boot API for your SecureTask project with JWT auth, RBAC, validation, actuator, and Swagger UI.
+A small Spring Boot API for SecureTask with JWT login, roles, validation, Actuator health, and Swagger UI. It also includes a simple Community Issue Reporter (photo + address) so anyone can submit reports from a clean web form.
 
-## Quick start
+What you get
 
-1) Generate a base64 secret (Linux/macOS):
-```bash
+/api/auth/login → get a JWT (demo user: admin / password)
+
+/api/tasks → CRUD (secured by JWT + RBAC)
+
+/api/issues → create/search/update community issues (optional photo)
+
+/report → one-page public form (mobile-friendly, no login)
+
+Swagger docs → /swagger-ui.html
+
+Health check → /actuator/health
+
+Run it
+1) Set a JWT secret
+
+Linux/macOS
+
 head -c 32 /dev/urandom | base64
-```
-On Windows (PowerShell):
-```powershell
-$bytes = New-Object byte[] 32; (New-Object System.Security.Cryptography.RNGCryptoServiceProvider).GetBytes($bytes); [Convert]::ToBase64String($bytes)
-```
-
-2) Run:
-```bash
+# copy the output, then:
 export APP_JWT_SECRET="PASTE_BASE64_KEY"
-./mvnw spring-boot:run
-# or: mvn spring-boot:run
-```
-
-3) Swagger UI: http://localhost:8080/swagger-ui.html  
-Health: http://localhost:8080/actuator/health
-
-## Auth demo
-- POST /api/auth/login  { "username":"admin", "password":"password" }
-- Use returned Bearer token for /api/tasks
-
-## Integrate your AVL Tree
-Replace the in-memory map in `TaskService` with your AVL index. E.g., keep a map<id,Task> for storage and an AVL index on title for fast search. Update methods to keep both structures in sync.
-
-## Notes
-- This starter uses `jjwt` (HS256) and expects a base64 key in `APP_JWT_SECRET`.
-- Exposes `/api/tasks` (CRUD), `/api/auth/login`, `/actuator/health`, and Swagger docs.
 
 
----
+Windows PowerShell
 
-## Project Layout (clean)
-- `src/main/java/com/esecure/securetask/...` — Spring Boot API, security, services
-- `src/main/resources/application.yml` — configuration (uses `APP_JWT_SECRET`)
-- `src/test/java/...` — tests
-- `legacy/` code has been moved under `src/main/java/com/esecure/securetask/legacy/*` for reference
-- Removed old top-level folders: `controller/`, `service/`, `utils/`, `model/`, `logs/`, `Main`
+$bytes = New-Object byte[] 32; (New-Object System.Security.Cryptography.RNGCryptoServiceProvider).GetBytes($bytes); [Convert]::ToBase64String($bytes)
+# copy the output, then:
+setx APP_JWT_SECRET "PASTE_BASE64_KEY"
+# open a new terminal so the var is available
+
+2) Start the app
+mvn spring-boot:run
+# open http://localhost:8080/swagger-ui.html
+# open http://localhost:8080/actuator/health
+
+Quick tour
+Auth (demo)
+POST /api/auth/login
+Content-Type: application/json
+
+{ "username": "admin", "password": "password" }
 
 
-## Community Issue Reporter (geo + photos) — MVP
-### Endpoints
-- `POST /api/issues` (multipart): `meta` (JSON) + optional `photo` → creates an issue
-- `GET /api/issues?status=&nearLat=&nearLng=&radiusMeters=`: search (public read)
-- `PATCH /api/issues/{id}/status`: update status (`NEW`, `IN_PROGRESS`, `DONE`)
-- `GET /api/issues/feed.json`: public map feed (recent issues with lat/lng/status)
+Use the returned accessToken as Authorization: Bearer <token> for secured endpoints.
 
-### Example (PowerShell)
-```powershell
-# login (get token)
+Tasks API (JWT required)
+
+GET /api/tasks
+
+POST /api/tasks
+
+PUT /api/tasks/{id}
+
+DELETE /api/tasks/{id}
+
+Tip: This is where you can plug in your AVL tree: keep a Map<id, Task> for storage and maintain an AVL index (e.g., on title) for O(log n) search. Update both in create/update/delete.
+
+Community Issue Reporter (no login)
+Use the web form
+
+Open http://localhost:8080/report
+
+Fill Title + Address (or click Use my location)
+
+Optional: add a photo
+
+Submit 🎉
+
+Endpoints
+
+POST /api/issues (multipart: meta JSON + photo)
+
+POST /api/issues/simple (form fields: title, description, street, city, state, postalCode, latitude, longitude, assignedGroup, photo)
+
+GET /api/issues?status=&postalCode=&streetContains=&nearLat=&nearLng=&radiusMeters=
+
+PATCH /api/issues/{id}/status (e.g., NEW → IN_PROGRESS → DONE)
+
+GET /api/issues/feed.json (public JSON feed)
+
+Address-first UX (friendlier than raw GPS)
+
+Users can type Street / City / State / ZIP.
+
+If only address is provided, the server geocodes to lat/lng.
+
+If only GPS is provided (Use my location), the server reverse-geocodes the address.
+
+Search supports postalCode and streetContains filters.
+
+Geocoding config (recommended)
+# pick a provider (Nominatim is default)
+export APP_GEOCODE_PROVIDER=NOMINATIM
+export NOMINATIM_BASE=https://nominatim.openstreetmap.org
+export NOMINATIM_EMAIL=you@example.com   # (note the spelling)
+
+
+Provide a contact email to respect Nominatim’s usage policy.
+For offline/local demos: export APP_GEOCODE_PROVIDER=NONE
+
+Handy examples (PowerShell)
+# 1) get a token
 $body = '{"username":"admin","password":"password"}'
 $TOKEN = (Invoke-RestMethod -Uri "http://localhost:8080/api/auth/login" -Method Post -ContentType "application/json" -Body $body).accessToken
 
-# create issue (multipart)
+# 2) create an issue with photo (multipart)
 $meta = '{"title":"Pothole on 5th Ave","description":"Large pothole near stop sign","latitude":33.7489,"longitude":-84.3900,"assignedGroup":"roads"}'
-$fields = @{
-  meta = $meta
-  photo = Get-Item "C:\path\to\photo.jpg"
-}
+$fields = @{ meta = $meta; photo = Get-Item "C:\path\to\photo.jpg" }
 Invoke-RestMethod -Uri "http://localhost:8080/api/issues" -Method Post -Headers @{Authorization="Bearer $TOKEN"} -Form $fields
 
-# public feed
+# 3) public feed (no auth)
 Invoke-RestMethod -Uri "http://localhost:8080/api/issues/feed.json" -Method Get
-```
+
+Notes & defaults
+
+JWT: HS256 via jjwt, expects base64 key in APP_JWT_SECRET.
+
+Rate limiting (anonymous issue submits): default 10 requests / 10 minutes / IP.
+Tune with:
+
+export RATE_LIMIT_WINDOW_SEC=600
+export RATE_LIMIT_MAX=10
 
 
-## Easy Reporting (no login)
-- Visit **/report** to use a simple form (auto-fill location).
-- Anonymous submissions are allowed and rate-limited (defaults: 10 per 10 minutes per IP; configurable with `RATE_LIMIT_*` env vars).
-- CORS is enabled for basic cross-site posting (you can host a static form elsewhere).
+CORS is on for simple cross-site posts; lock it down for production.
 
-**Test locally**
-- Open: `http://localhost:8080/report`
-- or POST form-data to `/api/issues/simple` with fields: `title`, `description`, `latitude`, `longitude`, optional `assignedGroup`, and optional file `photo`.
+Project layout
+src/main/java/com/esecure/securetask/...   # API, security, services
+src/main/resources/application.yml         # configuration
+src/test/java/...                          # tests
 
 
-## Address‑first reporting (friendlier UX)
-- Reporters can enter **Street, City, State, ZIP** instead of coordinates.
-- If only address is provided, the server **geocodes** it (Nominatim/OpenStreetMap).
-- If only GPS is provided (Use my location), the server **reverse‑geocodes** to fill the address.
-- Search now supports `?postalCode=` and `?streetContains=` in addition to radius searches.
+Legacy code (if any) moved under src/main/java/com/esecure/securetask/legacy/* for reference.
 
-**Config (recommended):**
-```
-APP_GEOCODE_PROVIDER=NOMINATIM
-NOMINATIM_BASE=https://nominatim.openstreetmap.org
-NOMINATIN_EMAIL=you@example.com
-```
-(Provide a contact email to respect Nominatim usage policy. For local dev or offline demos, set `APP_GEOCODE_PROVIDER=NONE` to disable network calls.)
+Troubleshooting
+
+spring-boot:run not found → add Boot parent in pom.xml or pin the plugin version (3.3.3).
+
+Reverse geocoding slow/fails → set APP_GEOCODE_PROVIDER=NONE to disable, or provide NOMINATIM_EMAIL.
+
+429 Too Many Requests on /api/issues/simple → hit the rate limit; adjust RATE_LIMIT_* env vars.
