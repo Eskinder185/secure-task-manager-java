@@ -1,0 +1,885 @@
+<!-- report.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report a Community Issue</title>
+    <style>
+        :root {
+            --primary: #155EEF;
+            --success: #17B26A;
+            --warning: #DC6803;
+            --error: #D92D20;
+            --text: #0F172A;
+            --muted: #475569;
+            --surface: #FFFFFF;
+            --border: #E2E8F0;
+            --bg: #F8FAFC;
+            --text-2xl: 1.5rem;
+            --text-xl: 1.25rem;
+            --text-lg: 1.125rem;
+            --text-base: 1rem;
+            --text-sm: 0.875rem;
+            --font-weight-medium: 500;
+            --font-weight-normal: 400;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .notice-bar {
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            font-size: var(--text-sm);
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: var(--text-2xl);
+            font-weight: var(--font-weight-medium);
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .header p {
+            font-size: var(--text-base);
+            color: var(--muted);
+        }
+
+        .form-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-row-4 {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .coords-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 640px) {
+            .form-row, .form-row-4, .coords-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: var(--text-base);
+            font-weight: var(--font-weight-medium);
+            color: var(--text);
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: var(--text-base);
+            background: var(--surface);
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            border-color: var(--primary);
+        }
+
+        input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"] {
+            border-color: var(--error);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .char-counter {
+            font-size: var(--text-sm);
+            color: var(--muted);
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        .char-counter.over-limit {
+            color: var(--error);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 100px;
+        }
+
+        .file-input-display:hover {
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .file-input-display.has-file {
+            border-style: solid;
+            border-color: var(--success);
+            background: var(--surface);
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: var(--text-base);
+            font-weight: var(--font-weight-medium);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 44px;
+            text-decoration: none;
+        }
+
+        .button:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .button-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .button-primary:hover:not(:disabled) {
+            background: #1047CC;
+        }
+
+        .button-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .button-secondary:hover:not(:disabled) {
+            background: var(--bg);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .helper-text {
+            font-size: var(--text-sm);
+            color: var(--muted);
+            margin-top: 16px;
+        }
+
+        .error-text {
+            font-size: var(--text-sm);
+            color: var(--error);
+            margin-top: 4px;
+        }
+
+        .status-area {
+            margin-top: 16px;
+            min-height: 24px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-success {
+            background: #F0FDF4;
+            color: var(--success);
+            border: 1px solid #BBF7D0;
+        }
+
+        .alert-warning {
+            background: #FFFBEB;
+            color: var(--warning);
+            border: 1px solid #FED7AA;
+        }
+
+        .alert-error {
+            background: #FEF2F2;
+            color: var(--error);
+            border: 1px solid #FECACA;
+        }
+
+        .footer {
+            margin-top: 48px;
+            text-align: center;
+            font-size: var(--text-sm);
+            color: var(--muted);
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 8px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes confetti {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1) rotate(180deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            animation: confetti 1s ease-out forwards;
+            z-index: 1000;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="notice-bar">
+        Help improve our neighborhood. Report an issue in ~1 minute.
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <h1>Report a Community Issue</h1>
+            <p>Potholes, streetlights, trash—snap a photo, add the location, and submit.</p>
+        </header>
+
+        <div id="location-banner" class="alert alert-warning hidden" role="alert">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+            Location access denied. You can still type your address manually.
+        </div>
+
+        <main class="form-card">
+            <form id="issue-form" novalidate>
+                <div class="form-group">
+                    <label for="title">Issue Title *</label>
+                    <input 
+                        type="text" 
+                        id="title" 
+                        name="title" 
+                        required 
+                        maxlength="120" 
+                        placeholder="Briefly describe the issue"
+                        aria-describedby="title-counter title-error"
+                    >
+                    <div class="char-counter" id="title-counter">0/120</div>
+                    <div class="error-text hidden" id="title-error" role="alert"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description (optional)</label>
+                    <textarea 
+                        id="description" 
+                        name="description" 
+                        maxlength="2000" 
+                        placeholder="Provide additional details about the issue"
+                        aria-describedby="description-counter"
+                    ></textarea>
+                    <div class="char-counter" id="description-counter">0/2000</div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-row-4">
+                        <div>
+                            <label for="street">Street Address</label>
+                            <input 
+                                type="text" 
+                                id="street" 
+                                name="street" 
+                                placeholder="123 Main St"
+                            >
+                        </div>
+                        <div>
+                            <label for="city">City</label>
+                            <input 
+                                type="text" 
+                                id="city" 
+                                name="city" 
+                                placeholder="Anytown"
+                            >
+                        </div>
+                        <div>
+                            <label for="state">State</label>
+                            <input 
+                                type="text" 
+                                id="state" 
+                                name="state" 
+                                placeholder="CA"
+                            >
+                        </div>
+                        <div>
+                            <label for="postalCode">Zip Code</label>
+                            <input 
+                                type="text" 
+                                id="postalCode" 
+                                name="postalCode" 
+                                placeholder="12345"
+                                aria-describedby="postal-error"
+                            >
+                            <div class="error-text hidden" id="postal-error" role="alert"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="coords-row">
+                        <div>
+                            <label for="latitude">Latitude</label>
+                            <input 
+                                type="number" 
+                                id="latitude" 
+                                name="latitude" 
+                                step="any" 
+                                placeholder="37.7749"
+                                aria-describedby="lat-error"
+                            >
+                            <div class="error-text hidden" id="lat-error" role="alert"></div>
+                        </div>
+                        <div>
+                            <label for="longitude">Longitude</label>
+                            <input 
+                                type="number" 
+                                id="longitude" 
+                                name="longitude" 
+                                step="any" 
+                                placeholder="-122.4194"
+                                aria-describedby="lng-error"
+                            >
+                            <div class="error-text hidden" id="lng-error" role="alert"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="assignedGroup">Department</label>
+                    <select id="assignedGroup" name="assignedGroup">
+                        <option value="">Select department (optional)</option>
+                        <option value="roads">Roads & Infrastructure</option>
+                        <option value="lighting">Street Lighting</option>
+                        <option value="sanitation">Sanitation & Waste</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="photo">Photo (optional)</label>
+                    <div class="file-input-wrapper">
+                        <input 
+                            type="file" 
+                            id="photo" 
+                            name="photo" 
+                            accept="image/*" 
+                            class="file-input"
+                            aria-describedby="photo-help"
+                        >
+                        <div class="file-input-display" id="photo-display">
+                            <div>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                                    <circle cx="9" cy="9" r="2"/>
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                                </svg>
+                                <p>Click to upload photo or drag and drop</p>
+                                <p class="char-counter">JPG, PNG up to 2MB</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="helper-text" id="photo-help">
+                        Photos help us understand and prioritize your report
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="button button-secondary" id="location-btn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 1a4.5 4.5 0 0 1 4.5 4.5c0 1.47-.62 2.91-1.741 4.157L8.747 12.7a.75.75 0 0 1-1.494 0L5.241 9.657A5.497 5.497 0 0 1 3.5 5.5 4.5 4.5 0 0 1 8 1zm0 2.75a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5z"/>
+                        </svg>
+                        Use my location
+                    </button>
+                    <button type="submit" class="button button-primary" id="submit-btn">
+                        <span id="submit-text">Submit report</span>
+                        <span class="spinner hidden" id="submit-spinner"></span>
+                    </button>
+                </div>
+
+                <div class="helper-text">
+                    Don't include personal information. Photos may be publicly visible.
+                </div>
+
+                <div class="status-area" id="status-area" aria-live="polite" aria-atomic="true"></div>
+            </form>
+        </main>
+
+        <footer class="footer">
+            <a href="/api/issues/feed.json">View public feed</a>
+            <a href="/swagger-ui.html">API docs</a>
+        </footer>
+    </div>
+
+    <script>
+        class IssueReporter {
+            constructor() {
+                this.form = document.getElementById('issue-form');
+                this.locationBtn = document.getElementById('location-btn');
+                this.submitBtn = document.getElementById('submit-btn');
+                this.statusArea = document.getElementById('status-area');
+                this.locationBanner = document.getElementById('location-banner');
+                
+                this.bindEvents();
+                this.setupCharCounters();
+                this.setupFileInput();
+                this.attemptGeolocation();
+            }
+
+            bindEvents() {
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                this.locationBtn.addEventListener('click', () => this.getLocation());
+            }
+
+            setupCharCounters() {
+                const titleInput = document.getElementById('title');
+                const titleCounter = document.getElementById('title-counter');
+                const descInput = document.getElementById('description');
+                const descCounter = document.getElementById('description-counter');
+
+                titleInput.addEventListener('input', () => {
+                    const count = titleInput.value.length;
+                    titleCounter.textContent = `${count}/120`;
+                    titleCounter.classList.toggle('over-limit', count > 120);
+                });
+
+                descInput.addEventListener('input', () => {
+                    const count = descInput.value.length;
+                    descCounter.textContent = `${count}/2000`;
+                    descCounter.classList.toggle('over-limit', count > 2000);
+                });
+            }
+
+            setupFileInput() {
+                const photoInput = document.getElementById('photo');
+                const photoDisplay = document.getElementById('photo-display');
+
+                photoInput.addEventListener('change', () => {
+                    const file = photoInput.files[0];
+                    if (file) {
+                        photoDisplay.classList.add('has-file');
+                        photoDisplay.innerHTML = `
+                            <div>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                <p><strong>${file.name}</strong></p>
+                                <p class="char-counter">${(file.size / 1024 / 1024).toFixed(1)}MB</p>
+                            </div>
+                        `;
+
+                        if (file.size > 2 * 1024 * 1024) {
+                            this.showStatus('Consider uploading a smaller image for faster processing.', 'warning');
+                        }
+                    } else {
+                        photoDisplay.classList.remove('has-file');
+                        photoDisplay.innerHTML = `
+                            <div>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                                    <circle cx="9" cy="9" r="2"/>
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                                </svg>
+                                <p>Click to upload photo or drag and drop</p>
+                                <p class="char-counter">JPG, PNG up to 2MB</p>
+                            </div>
+                        `;
+                    }
+                });
+            }
+
+            async attemptGeolocation() {
+                if (!navigator.geolocation) return;
+
+                try {
+                    const position = await this.getCurrentPosition();
+                    await this.setLocationData(position.coords.latitude, position.coords.longitude);
+                } catch (error) {
+                    this.showLocationBanner();
+                }
+            }
+
+            getCurrentPosition() {
+                return new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 300000
+                    });
+                });
+            }
+
+            async getLocation() {
+                this.locationBtn.disabled = true;
+                this.locationBtn.innerHTML = `
+                    <span class="spinner"></span>
+                    Getting location...
+                `;
+
+                try {
+                    const position = await this.getCurrentPosition();
+                    await this.setLocationData(position.coords.latitude, position.coords.longitude);
+                    this.hideLocationBanner();
+                } catch (error) {
+                    this.showLocationBanner();
+                    this.showStatus('Could not get your location. Please enter address manually.', 'error');
+                } finally {
+                    this.locationBtn.disabled = false;
+                    this.locationBtn.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 1a4.5 4.5 0 0 1 4.5 4.5c0 1.47-.62 2.91-1.741 4.157L8.747 12.7a.75.75 0 0 1-1.494 0L5.241 9.657A5.497 5.497 0 0 1 3.5 5.5 4.5 4.5 0 0 1 8 1zm0 2.75a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5z"/>
+                        </svg>
+                        Use my location
+                    `;
+                }
+            }
+
+            async setLocationData(lat, lng) {
+                document.getElementById('latitude').value = lat.toFixed(6);
+                document.getElementById('longitude').value = lng.toFixed(6);
+
+                try {
+                    const response = await fetch(`/api/geocode/reverse?lat=${lat}&lng=${lng}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.street) document.getElementById('street').value = data.street;
+                        if (data.city) document.getElementById('city').value = data.city;
+                        if (data.state) document.getElementById('state').value = data.state;
+                        if (data.postalCode) document.getElementById('postalCode').value = data.postalCode;
+                    }
+                } catch (error) {
+                    console.warn('Geocoding failed:', error);
+                }
+            }
+
+            showLocationBanner() {
+                this.locationBanner.classList.remove('hidden');
+            }
+
+            hideLocationBanner() {
+                this.locationBanner.classList.add('hidden');
+            }
+
+            validateForm() {
+                let isValid = true;
+                this.clearErrors();
+
+                // Title validation
+                const title = document.getElementById('title').value.trim();
+                if (!title) {
+                    this.showFieldError('title', 'Title is required');
+                    isValid = false;
+                } else if (title.length > 120) {
+                    this.showFieldError('title', 'Title must be 120 characters or less');
+                    isValid = false;
+                }
+
+                // Description validation
+                const description = document.getElementById('description').value;
+                if (description.length > 2000) {
+                    this.showFieldError('description', 'Description must be 2000 characters or less');
+                    isValid = false;
+                }
+
+                // Postal code validation
+                const postalCode = document.getElementById('postalCode').value.trim();
+                if (postalCode && !/^(\d{5}(-\d{4})?|[A-Za-z0-9]+)$/.test(postalCode)) {
+                    this.showFieldError('postalCode', 'Invalid postal code format');
+                    isValid = false;
+                }
+
+                // Latitude validation
+                const latitude = document.getElementById('latitude').value;
+                if (latitude && isNaN(parseFloat(latitude))) {
+                    this.showFieldError('latitude', 'Invalid latitude');
+                    isValid = false;
+                }
+
+                // Longitude validation
+                const longitude = document.getElementById('longitude').value;
+                if (longitude && isNaN(parseFloat(longitude))) {
+                    this.showFieldError('longitude', 'Invalid longitude');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            showFieldError(fieldId, message) {
+                const field = document.getElementById(fieldId);
+                const errorElement = document.getElementById(`${fieldId.replace('Code', '')}-error`);
+                
+                field.setAttribute('aria-invalid', 'true');
+                if (errorElement) {
+                    errorElement.textContent = message;
+                    errorElement.classList.remove('hidden');
+                }
+            }
+
+            clearErrors() {
+                const fields = ['title', 'description', 'postalCode', 'latitude', 'longitude'];
+                fields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    const errorElement = document.getElementById(`${fieldId.replace('Code', '')}-error`);
+                    
+                    field.removeAttribute('aria-invalid');
+                    if (errorElement) {
+                        errorElement.textContent = '';
+                        errorElement.classList.add('hidden');
+                    }
+                });
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                if (!this.validateForm()) return;
+
+                this.setSubmitState(true);
+                
+                try {
+                    const formData = new FormData(this.form);
+                    
+                    const response = await fetch('/api/issues/simple', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.status === 200) {
+                        const result = await response.json();
+                        this.showStatus(`
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm3.78-9.72a.75.75 0 0 0-1.06-1.06L6.75 9.19 5.28 7.72a.75.75 0 0 0-1.06 1.06l2 2a.75.75 0 0 0 1.06 0l4.5-4.5z"/>
+                            </svg>
+                            Thank you! Your issue ID is ${result.id || 'N/A'}.
+                        `, 'success');
+                        this.clearForm();
+                        this.triggerConfetti();
+                    } else if (response.status === 429) {
+                        this.showStatus('Too many reports; please try again in a few minutes.', 'warning');
+                    } else {
+                        const errorText = await response.text().catch(() => 'Unknown error occurred');
+                        this.showStatus(errorText || 'Failed to submit report. Please try again.', 'error');
+                    }
+                } catch (error) {
+                    this.showStatus('Network error. Please check your connection and try again.', 'error');
+                } finally {
+                    this.setSubmitState(false);
+                }
+            }
+
+            setSubmitState(isSubmitting) {
+                const submitText = document.getElementById('submit-text');
+                const submitSpinner = document.getElementById('submit-spinner');
+                
+                this.submitBtn.disabled = isSubmitting;
+                if (isSubmitting) {
+                    submitText.textContent = 'Submitting...';
+                    submitSpinner.classList.remove('hidden');
+                } else {
+                    submitText.textContent = 'Submit report';
+                    submitSpinner.classList.add('hidden');
+                }
+            }
+
+            showStatus(message, type) {
+                const alertClass = `alert-${type}`;
+                this.statusArea.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+                this.statusArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            clearForm() {
+                // Clear all fields except address/location data
+                document.getElementById('title').value = '';
+                document.getElementById('description').value = '';
+                document.getElementById('assignedGroup').value = '';
+                document.getElementById('photo').value = '';
+                
+                // Reset file input display
+                const photoDisplay = document.getElementById('photo-display');
+                photoDisplay.classList.remove('has-file');
+                photoDisplay.innerHTML = `
+                    <div>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                            <circle cx="9" cy="9" r="2"/>
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                        </svg>
+                        <p>Click to upload photo or drag and drop</p>
+                        <p class="char-counter">JPG, PNG up to 2MB</p>
+                    </div>
+                `;
+
+                // Reset character counters
+                document.getElementById('title-counter').textContent = '0/120';
+                document.getElementById('description-counter').textContent = '0/2000';
+                
+                this.clearErrors();
+            }
+
+            triggerConfetti() {
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    return;
+                }
+
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.className = 'confetti';
+                        confetti.style.left = Math.random() * 100 + 'vw';
+                        confetti.style.top = Math.random() * 100 + 'vh';
+                        confetti.style.background = [
+                            'var(--primary)',
+                            'var(--success)', 
+                            'var(--warning)'
+                        ][Math.floor(Math.random() * 3)];
+                        
+                        document.body.appendChild(confetti);
+                        
+                        setTimeout(() => confetti.remove(), 1000);
+                    }, i * 50);
+                }
+            }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => new IssueReporter());
+        } else {
+            new IssueReporter();
+        }
+    </script>
+</body>
+</html>

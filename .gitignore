@@ -1,0 +1,25 @@
+# Build output
+target/
+build/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+target/
+uploads/
+*.log
+*.iml
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

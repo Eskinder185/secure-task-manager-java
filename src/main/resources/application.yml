@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+
+# IMPORTANT: set APP_JWT_SECRET env var to a BASE64-ENCODED 256-bit key
+# Example (Linux/macOS): head -c 32 /dev/urandom | base64
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:REPLACE_WITH_BASE64_KEY}
+
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+app:
+  storage:
+    dir: ${STORAGE_DIR:./uploads}
+
+
+app:
+  ratelimit:
+    windowSec: ${RATE_LIMIT_WINDOW_SEC:600}
+    max: ${RATE_LIMIT_MAX:10}
+
+
+app:
+  geocode:
+    provider: ${APP_GEOCODE_PROVIDER:NOMINATIM}   # NOMINATIM or NONE
+    nominatim:
+      base: ${NOMINATIM_BASE:https://nominatim.openstreetmap.org}
+      email: ${NOMINATIM_EMAIL:}   # set a contact email to respect usage policy
