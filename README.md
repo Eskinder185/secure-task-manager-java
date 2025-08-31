@@ -1,146 +1,63 @@
-SecureTask – Spring Boot Starter
+SecureTask (Spring Boot)
 
-A small Spring Boot API for SecureTask with JWT login, roles, validation, Actuator health, and Swagger UI. It also includes a simple Community Issue Reporter (photo + address) so anyone can submit reports from a clean web form.
+SecureTask is a small Spring Boot API with JWT login, role-based access, and a Community Issue Reporter (simple web form with photo + address).
 
-What you get
+What’s included
 
-/api/auth/login → get a JWT (demo user: admin / password)
+Authentication: login to get a JWT, use it for protected task endpoints.
 
-/api/tasks → CRUD (secured by JWT + RBAC)
+Tasks API: basic create/read/update/delete for tasks.
 
-/api/issues → create/search/update community issues (optional photo)
+Issue Reporter: public form to submit neighborhood issues; optional photo.
 
-/report → one-page public form (mobile-friendly, no login)
+Docs & health: interactive API docs and a health check.
 
-Swagger docs → /swagger-ui.html
+How to run (high level)
 
-Health check → /actuator/health
+Install Java 17 and Maven on your machine.
 
-Run it
-1) Set a JWT secret
+Set an environment variable named APP_JWT_SECRET to a random base64 key.
 
-Linux/macOS
+Start the Spring Boot app from the project folder (the one that contains pom.xml).
 
-head -c 32 /dev/urandom | base64
-# copy the output, then:
-export APP_JWT_SECRET="PASTE_BASE64_KEY"
+Open the app in your browser.
 
+Where to go
 
-Windows PowerShell
+API Docs (Swagger UI): open the “swagger” page at port 8080.
 
-$bytes = New-Object byte[] 32; (New-Object System.Security.Cryptography.RNGCryptoServiceProvider).GetBytes($bytes); [Convert]::ToBase64String($bytes)
-# copy the output, then:
-setx APP_JWT_SECRET "PASTE_BASE64_KEY"
-# open a new terminal so the var is available
+Health check: open the “actuator/health” page at port 8080.
 
-2) Start the app
-mvn spring-boot:run
-# open http://localhost:8080/swagger-ui.html
-# open http://localhost:8080/actuator/health
+Public report form: open the “/report” page at port 8080.
 
-Quick tour
-Auth (demo)
-POST /api/auth/login
-Content-Type: application/json
+Using it
 
-{ "username": "admin", "password": "password" }
+Log in at the auth endpoint to get a token, then include the token as a Bearer token for protected routes.
 
+Submit issues either through the web form or by sending form data to the issues endpoints.
 
-Use the returned accessToken as Authorization: Bearer <token> for secured endpoints.
+View recent reports via the public feed endpoint.
 
-Tasks API (JWT required)
+Address and location (optional)
 
-GET /api/tasks
+Reporters can type Street, City, State, and ZIP.
 
-POST /api/tasks
+If only an address is provided, the server can look up coordinates.
 
-PUT /api/tasks/{id}
+If only GPS is provided (Use my location), the server can look up the address.
 
-DELETE /api/tasks/{id}
+To enable this, set the geocoding provider and an email contact in your environment.
 
-Tip: This is where you can plug in your AVL tree: keep a Map<id, Task> for storage and maintain an AVL index (e.g., on title) for O(log n) search. Update both in create/update/delete.
+For offline demos, you can disable geocoding.
 
-Community Issue Reporter (no login)
-Use the web form
+Rate limiting
 
-Open http://localhost:8080/report
+Anonymous issue submissions are limited by default (per IP, short time window).
 
-Fill Title + Address (or click Use my location)
+You can change the window and limit with environment settings.
 
-Optional: add a photo
+Notes
 
-Submit 🎉
+If the app doesn’t start because of a plugin error, make sure the project uses the Spring Boot parent in the Maven configuration or that the Spring Boot Maven plugin version is set.
 
-Endpoints
-
-POST /api/issues (multipart: meta JSON + photo)
-
-POST /api/issues/simple (form fields: title, description, street, city, state, postalCode, latitude, longitude, assignedGroup, photo)
-
-GET /api/issues?status=&postalCode=&streetContains=&nearLat=&nearLng=&radiusMeters=
-
-PATCH /api/issues/{id}/status (e.g., NEW → IN_PROGRESS → DONE)
-
-GET /api/issues/feed.json (public JSON feed)
-
-Address-first UX (friendlier than raw GPS)
-
-Users can type Street / City / State / ZIP.
-
-If only address is provided, the server geocodes to lat/lng.
-
-If only GPS is provided (Use my location), the server reverse-geocodes the address.
-
-Search supports postalCode and streetContains filters.
-
-Geocoding config (recommended)
-# pick a provider (Nominatim is default)
-export APP_GEOCODE_PROVIDER=NOMINATIM
-export NOMINATIM_BASE=https://nominatim.openstreetmap.org
-export NOMINATIM_EMAIL=you@example.com   # (note the spelling)
-
-
-Provide a contact email to respect Nominatim’s usage policy.
-For offline/local demos: export APP_GEOCODE_PROVIDER=NONE
-
-Handy examples (PowerShell)
-# 1) get a token
-$body = '{"username":"admin","password":"password"}'
-$TOKEN = (Invoke-RestMethod -Uri "http://localhost:8080/api/auth/login" -Method Post -ContentType "application/json" -Body $body).accessToken
-
-# 2) create an issue with photo (multipart)
-$meta = '{"title":"Pothole on 5th Ave","description":"Large pothole near stop sign","latitude":33.7489,"longitude":-84.3900,"assignedGroup":"roads"}'
-$fields = @{ meta = $meta; photo = Get-Item "C:\path\to\photo.jpg" }
-Invoke-RestMethod -Uri "http://localhost:8080/api/issues" -Method Post -Headers @{Authorization="Bearer $TOKEN"} -Form $fields
-
-# 3) public feed (no auth)
-Invoke-RestMethod -Uri "http://localhost:8080/api/issues/feed.json" -Method Get
-
-Notes & defaults
-
-JWT: HS256 via jjwt, expects base64 key in APP_JWT_SECRET.
-
-Rate limiting (anonymous issue submits): default 10 requests / 10 minutes / IP.
-Tune with:
-
-export RATE_LIMIT_WINDOW_SEC=600
-export RATE_LIMIT_MAX=10
-
-
-CORS is on for simple cross-site posts; lock it down for production.
-
-Project layout
-src/main/java/com/esecure/securetask/...   # API, security, services
-src/main/resources/application.yml         # configuration
-src/test/java/...                          # tests
-
-
-Legacy code (if any) moved under src/main/java/com/esecure/securetask/legacy/* for reference.
-
-Troubleshooting
-
-spring-boot:run not found → add Boot parent in pom.xml or pin the plugin version (3.3.3).
-
-Reverse geocoding slow/fails → set APP_GEOCODE_PROVIDER=NONE to disable, or provide NOMINATIM_EMAIL.
-
-429 Too Many Requests on /api/issues/simple → hit the rate limit; adjust RATE_LIMIT_* env vars.
+If reverse geocoding is slow or blocked, provide a contact email in the geocoding settings, or disable geocoding for local testing.
